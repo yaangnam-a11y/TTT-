@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Profile Validation
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'gender', 'year'])
+        && data.keys().hasOnly(['userId', 'gender', 'age', 'year', 'gpa', 'hasChronicDisease', 'chronicDiseaseDetail', 'updatedAt'])
+        && data.userId is string && data.userId == request.auth.uid
+        && data.gender is string && data.gender.size() <= 20
+        && data.year is string && data.year.size() <= 20
+        && (!('age' in data) || (data.age is string && data.age.size() <= 10))
+        && (!('gpa' in data) || (data.gpa is string && data.gpa.size() <= 10))
+        && (!('hasChronicDisease' in data) || (data.hasChronicDisease is string && data.hasChronicDisease.size() <= 10))
+        && (!('chronicDiseaseDetail' in data) || (data.chronicDiseaseDetail is string && data.chronicDiseaseDetail.size() <= 200))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    // Mental Health Record Validation
+    function isValidRecord(data, userId) {
+      return data.keys().hasAll(['recordId', 'userId', 'createdAt'])
+        && data.recordId is string && isValidId(data.recordId)
+        && data.userId is string && data.userId == userId && data.userId == request.auth.uid
+        && data.createdAt is string && data.createdAt.size() <= 60
+        && (!('dateFormatted' in data) || (data.dateFormatted is string && data.dateFormatted.size() <= 100))
+        && (!('stressScore' in data) || (data.stressScore is number && data.stressScore >= 0 && data.stressScore <= 100))
+        && (!('stressLevel' in data) || (data.stressLevel is string && data.stressLevel.size() <= 50))
+        && (!('depressionSummary' in data) || (data.depressionSummary is string && data.depressionSummary.size() <= 50))
+        && (!('nineQScore' in data) || (data.nineQScore is number && data.nineQScore >= 0 && data.nineQScore <= 50))
+        && (!('eightQScore' in data) || (data.eightQScore is number && data.eightQScore >= 0 && data.eightQScore <= 50))
+        && (!('resilienceScore' in data) || (data.resilienceScore is number && data.resilienceScore >= 0 && data.resilienceScore <= 50))
+        && (!('resilienceLevel' in data) || (data.resilienceLevel is string && data.resilienceLevel.size() <= 50))
+        && (!('happinessScore' in data) || (data.happinessScore is number && data.happinessScore >= 0 && data.happinessScore <= 50))
+        && (!('happinessLevel' in data) || (data.happinessLevel is string && data.happinessLevel.size() <= 50))
+        && (!('burnoutScore' in data) || (data.burnoutScore is number && data.burnoutScore >= 0 && data.burnoutScore <= 50))
+        && (!('burnoutLevel' in data) || (data.burnoutLevel is string && data.burnoutLevel.size() <= 50))
+        && (!('preTestScore' in data) || (data.preTestScore is number && data.preTestScore >= 0 && data.preTestScore <= 20))
+        && (!('postTestScore' in data) || (data.postTestScore is number && data.postTestScore >= 0 && data.postTestScore <= 20))
+        && (!('primaryRisk' in data) || (data.primaryRisk is string && data.primaryRisk.size() <= 200));
+    }
+
+    // Satisfaction Survey Validation
+    function isValidSurvey(data) {
+      return data.keys().hasAll(['surveyId', 'userId', 'submittedAt'])
+        && data.surveyId is string && isValidId(data.surveyId)
+        && data.userId is string && data.userId == request.auth.uid
+        && data.submittedAt is string && data.submittedAt.size() <= 60
+        && (!('ratings' in data) || (data.ratings is map))
+        && (!('feedback' in data) || (data.feedback is string && data.feedback.size() <= 1000));
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create, update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow delete: if false;
+
+      // 2. Subcollection of Historical Records for the User
+      match /records/{recordId} {
+        allow get: if isOwner(userId) && isValidId(recordId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(recordId) && isValidRecord(request.resource.data, userId);
+        allow update: if false; // Records are immutable historical logs
+        allow delete: if isOwner(userId) && isValidId(recordId);
+      }
+    }
+
+    // 3. Satisfaction Surveys
+    match /satisfaction_surveys/{surveyId} {
+      allow get: if isSignedIn() && isValidId(surveyId) && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(surveyId) && isValidSurvey(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}

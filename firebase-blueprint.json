@@ -1,0 +1,166 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and personal demographics for SIU Mental Care",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique user ID from Firebase Auth"
+        },
+        "gender": {
+          "type": "string",
+          "description": "Gender selection"
+        },
+        "age": {
+          "type": "string",
+          "description": "Age of the student"
+        },
+        "year": {
+          "type": "string",
+          "description": "Academic year (ปี 1 - 4)"
+        },
+        "gpa": {
+          "type": "string",
+          "description": "GPA"
+        },
+        "hasChronicDisease": {
+          "type": "string",
+          "description": "Has chronic disease (ไม่มี หรือ มี)"
+        },
+        "chronicDiseaseDetail": {
+          "type": "string",
+          "description": "Details of chronic illness"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last profile update"
+        }
+      },
+      "required": ["userId", "gender", "year"]
+    },
+    "MentalHealthRecord": {
+      "title": "MentalHealthRecord",
+      "description": "Historical assessment record across 5 mental health dimensions and tests",
+      "type": "object",
+      "properties": {
+        "recordId": {
+          "type": "string",
+          "description": "Unique record document ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID who owns this assessment record"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp or server timestamp when the assessment was submitted"
+        },
+        "dateFormatted": {
+          "type": "string",
+          "description": "Human readable date string in Thai locale"
+        },
+        "stressScore": {
+          "type": "number",
+          "description": "SPST-20 stress score (0-100)"
+        },
+        "stressLevel": {
+          "type": "string",
+          "description": "Stress severity level"
+        },
+        "depressionSummary": {
+          "type": "string",
+          "description": "Depression level summary"
+        },
+        "nineQScore": {
+          "type": "number",
+          "description": "9Q depression questionnaire total score"
+        },
+        "eightQScore": {
+          "type": "number",
+          "description": "8Q suicidality score"
+        },
+        "resilienceScore": {
+          "type": "number",
+          "description": "RQ total score"
+        },
+        "resilienceLevel": {
+          "type": "string",
+          "description": "RQ level category"
+        },
+        "happinessScore": {
+          "type": "number",
+          "description": "THI-15 happiness score"
+        },
+        "happinessLevel": {
+          "type": "string",
+          "description": "Happiness index level"
+        },
+        "burnoutScore": {
+          "type": "number",
+          "description": "Burnout total score"
+        },
+        "burnoutLevel": {
+          "type": "string",
+          "description": "Academic burnout level"
+        },
+        "preTestScore": {
+          "type": "number",
+          "description": "Score on Pre-test (out of 20)"
+        },
+        "postTestScore": {
+          "type": "number",
+          "description": "Score on Post-test (out of 20)"
+        },
+        "primaryRisk": {
+          "type": "string",
+          "description": "Primary psychological risk assessment"
+        }
+      },
+      "required": ["recordId", "userId", "createdAt"]
+    },
+    "SatisfactionSurvey": {
+      "title": "SatisfactionSurvey",
+      "description": "User feedback and application satisfaction survey",
+      "type": "object",
+      "properties": {
+        "surveyId": {
+          "type": "string",
+          "description": "Unique survey ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID of the respondent"
+        },
+        "ratings": {
+          "type": "object",
+          "description": "Star ratings mapped by question index"
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Freeform user suggestions"
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Submission timestamp"
+        }
+      },
+      "required": ["surveyId", "userId", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile containing academic year, GPA, and basic demographics"
+    },
+    "/users/{userId}/records/{recordId}": {
+      "schema": "MentalHealthRecord",
+      "description": "Individual historical evaluation record of the student"
+    },
+    "/satisfaction_surveys/{surveyId}": {
+      "schema": "SatisfactionSurvey",
+      "description": "Application satisfaction survey response"
+    }
+  }
+}

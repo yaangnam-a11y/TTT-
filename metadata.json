@@ -1,0 +1,6 @@
+{
+  "name": "SIU ดูแลใจ - Mental Care",
+  "description": "แอปพลิเคชันส่งเสริมและประเมินสุขภาพจิตสำหรับนักศึกษาพยาบาล มหาวิทยาลัยชินวัตร (SIU Mental Care)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
